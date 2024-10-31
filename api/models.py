@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+
  
 class Item(models.Model):
     id = models.CharField(
@@ -20,6 +21,7 @@ class Item(models.Model):
 
 class User(models.Model):
     name = models.CharField(max_length=30)
+    username = models.CharField(max_length=30, default="default_username")
 
     def __str__(self) -> str:
         return self.name
