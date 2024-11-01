@@ -7,8 +7,8 @@ from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from api import serializers
-from api.models import Item
-from api.serializers import ItemSerializer, UserSerializer
+from api.models import Item, Category
+from api.serializers import CategorySerializer, ItemSerializer, UserSerializer
 
 @api_view(['GET'])
 def ApiOverview(request):
@@ -21,23 +21,14 @@ def ApiOverview(request):
  
     return Response(api_urls)
 
+# ------------------Items----------------------------#
 
 @api_view(['GET'])
 def items(request):
     try:
+        name = request.query_params.get('name', "").strip()
              # Retrieve all items
-        items = Item.objects.all()
-
-          # Get the 'name' query parameter from the request (if provided)
-        # name_query = request.query_params.get('name', None)
-        
-        # # Filter items by name if a search term is provided
-        # if name_query:
-        #     items = Item.objects.filter(name__icontains=name_query)
-        # else:
-        #     items = Item.objects.all()
-        
-        # Serialize the items
+        items = Item.objects.all().filter(name__icontains = name)
         serializer = ItemSerializer(items, many=True)
         
         # Return the serialized data
@@ -75,6 +66,13 @@ def add_items(request):
         'amount': amount,
         'picture': request.FILES.get('picture') 
     }
+    
+    
+    # Check if a item with this name already exists
+    if Item.objects.filter(name=data['name']).exists():
+        return Response({
+            'error': 'Already added'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     serializer = ItemSerializer(data=data)
     if serializer.is_valid():
@@ -103,6 +101,8 @@ def delete_item(request, id):
     item = get_object_or_404(Item, id=id)
     item.delete()    
     return Response(data={'success': True, 'message': 'Deleted Successfully'}, status=status.HTTP_200_OK)
+
+# ------------------User Session----------------------------#
 
 @api_view(['POST'])
 @permission_classes([AllowAny])  # Allow access without authentication
@@ -138,3 +138,52 @@ def sign_up(request):
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# ------------------Categories----------------------------#
+
+@api_view(['GET'])
+def categories(request):
+    try:
+             # Retrieve all Category
+        category = Category.objects.all()
+        serializer = CategorySerializer(category, many=True)
+        
+        # Return the serialized data
+        return Response(data={'data': serializer.data}, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        # Log the error with traceback for debugging
+        error_trace = traceback.format_exc()
+        print(error_trace)  # Or log it using Django’s logging framework
+        
+        # Respond with the error details
+        return Response(
+            data={'error': str(e), 'trace': error_trace},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+@api_view(['POST'])
+def add_category(request):
+    # Extract the category name from the request data
+    category_name = request.data.get('name')
+    
+    # Check if the category already exists
+    if Category.objects.filter(name=category_name).exists():
+        return Response(data={'message': 'Category already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Create a serializer instance with the new category data
+    serializer = CategorySerializer(data={'name': category_name})
+  
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['DELETE'])
+def delete_category(request, id):
+    # Retrieve the category or return a 404 if not found
+    category = get_object_or_404(Category, id=id)
+    category.delete()    
+    return Response(data={'success': True, 'message': 'Deleted Successfully'}, status=status.HTTP_200_OK)

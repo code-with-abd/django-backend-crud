@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Item
+from .models import Item, Category
 
 from django.contrib.auth.models import User
 
@@ -36,3 +36,10 @@ class ItemSerializer(serializers.ModelSerializer):
          except ValueError:
             raise serializers.ValidationError({"amount": "Amount must be a valid number."})
          return data
+        
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ('id', 'name',)
+        read_only_fields = ('id',)  # Make id read-only
+    
