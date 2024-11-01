@@ -27,5 +27,12 @@ class UserSerializer(serializers.ModelSerializer):
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item
-        fields = ('id', 'category',  'name', 'amount')
+        fields = ('id', 'category',  'name', 'amount', 'picture')
         read_only_fields = ('id',)  # Make id read-only
+        def to_internal_value(self, data):
+         data = super().to_internal_value(data)
+         try:
+            data['amount'] = int(data['amount'])  # Convert amount to integer
+         except ValueError:
+            raise serializers.ValidationError({"amount": "Amount must be a valid number."})
+         return data

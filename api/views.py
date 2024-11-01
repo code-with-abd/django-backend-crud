@@ -56,33 +56,35 @@ def items(request):
 
 @api_view(['POST'])
 def add_items(request):
+    # Check incoming data type and convert if necessary
+    amount = request.data.get('amount')
     try:
-        item = ItemSerializer(data=request.data)
-        
-        # Check if the item already exists
-        if Item.objects.filter(**request.data).exists():
-            return Response(data={'message': 'Item already exists'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Validate and save the item if it’s valid
-        if item.is_valid():
-            item.save()
-            return Response(item.data, status=status.HTTP_201_CREATED)
-        
-        # Return validation errors if the item is not valid
-        return Response(item.errors, status=status.HTTP_400_BAD_REQUEST)
-    
-    except Exception as e:
-        # Log the error with traceback for debugging
-        error_trace = traceback.format_exc()
-        print(error_trace)  # Or log it using Django’s logging framework
-        
-        # Respond with the error details
+        # Ensure amount is an integer
+        amount = int(amount)
+    except (ValueError, TypeError):
+        # Return an error response if conversion fails
         return Response(
-            data={'error': str(e), 'trace': error_trace},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            {'error': "The 'amount' field should be a valid integer."},
+            status=status.HTTP_400_BAD_REQUEST
         )
+
+    # Construct data with validated amount
+    data = {
+        'category': request.data.get('category'),
+        'name': request.data.get('name'),
+        'amount': amount,
+        'picture': request.FILES.get('picture') 
+    }
+
+    serializer = ItemSerializer(data=data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     
-@api_view(['DELETE'])
+@api_view(['PUT'])
 def update_item(request, id):
     # Retrieve the item or return a 404 if not found
     item = get_object_or_404(Item, id=id)
