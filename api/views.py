@@ -121,6 +121,7 @@ def sign_in(request):
         return Response({
             'token': token.key,
             'username': user.username,
+            'id': user.id,
             'message': 'Sign-in successful!'
         }, status=status.HTTP_200_OK)
     else:
