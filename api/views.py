@@ -64,7 +64,8 @@ def add_items(request):
         'category': request.data.get('category'),
         'name': request.data.get('name'),
         'amount': amount,
-        'picture': request.FILES.get('picture') 
+        'picture': request.FILES.get('picture'),
+        'createdBy': request.data.get('createdBy'), 
     }
     
     

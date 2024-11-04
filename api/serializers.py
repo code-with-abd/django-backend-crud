@@ -24,22 +24,37 @@ class UserSerializer(serializers.ModelSerializer):
         user.save()
         return user 
 
-class ItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Item
-        fields = ('id', 'category',  'name', 'amount', 'picture')
-        read_only_fields = ('id',)  # Make id read-only
-        def to_internal_value(self, data):
-         data = super().to_internal_value(data)
-         try:
-            data['amount'] = int(data['amount'])  # Convert amount to integer
-         except ValueError:
-            raise serializers.ValidationError({"amount": "Amount must be a valid number."})
-         return data
-        
+      
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('id', 'name',)
         read_only_fields = ('id',)  # Make id read-only
-    
+
+class ItemSerializer(serializers.ModelSerializer):
+    category = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all())
+    createdBy = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = Item
+        fields = ('id', 'category', 'name', 'amount', 'picture', 'createdBy')
+        read_only_fields = ('id',)
+
+    def to_representation(self, instance):
+        # Call the default representation
+        representation = super().to_representation(instance)
+        
+        # Replace 'category' with its serialized data
+        representation['category'] = CategorySerializer(instance.category).data
+        
+        # Replace 'createdBy' with its serialized data
+        representation['createdBy'] = UserSerializer(instance.createdBy).data
+        return representation
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        try:
+            data['amount'] = int(data['amount'])  # Convert amount to integer
+        except ValueError:
+            raise serializers.ValidationError({"amount": "Amount must be a valid number."})
+        return data
