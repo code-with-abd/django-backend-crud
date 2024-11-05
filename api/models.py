@@ -23,6 +23,7 @@ class Item(models.Model):
 
     name = models.CharField(max_length=255)
     amount = models.PositiveIntegerField()
+    units = models.PositiveIntegerField()
     picture = models.ImageField(upload_to='item_pictures/', null=True, blank=True)  # New field
  
     def __str__(self) -> str:

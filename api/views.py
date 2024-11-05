@@ -5,8 +5,8 @@ from rest_framework.decorators import permission_classes, api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
-from api import serializers
+from django.contrib.auth import authenticate, logout
+from .utils import validate_integer
 from api.models import Item, Category
 from api.serializers import CategorySerializer, ItemSerializer, UserSerializer
 
@@ -47,23 +47,13 @@ def items(request):
 
 @api_view(['POST'])
 def add_items(request):
-    # Check incoming data type and convert if necessary
-    amount = request.data.get('amount')
-    try:
-        # Ensure amount is an integer
-        amount = int(amount)
-    except (ValueError, TypeError):
-        # Return an error response if conversion fails
-        return Response(
-            {'error': "The 'amount' field should be a valid integer."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    # Construct data with validated amount
+    amount =  validate_integer(request.data.get('amount'), 'amount')
+    units =  validate_integer(request.data.get('units'), 'units')
     data = {
         'category': request.data.get('category'),
         'name': request.data.get('name'),
         'amount': amount,
+        'units': units,
         'picture': request.FILES.get('picture'),
         'createdBy': request.data.get('createdBy'), 
     }
@@ -115,9 +105,9 @@ def sign_in(request):
     # Authenticate the user
     user = authenticate(request, username=username, password=password)
     
-    if user is not None:
+    if user:
         # User is authenticated, get or create a token for the user
-        token, created = Token.objects.get_or_create(user=user)
+        token, _ = Token.objects.get_or_create(user=user)
         
         return Response({
             'token': token.key,
@@ -130,6 +120,27 @@ def sign_in(request):
         return Response({
             'error': 'Invalid username or password'
         }, status=status.HTTP_401_UNAUTHORIZED)
+    
+
+
+@api_view(['POST'])
+def log_out(request):
+    # Get the user's token and delete it
+    try:
+        token = Token.objects.get(user=request.user)
+        token.delete()  # Delete the token to invalidate future requests
+    except Token.DoesNotExist:
+        # If the token does not exist, skip deletion
+        pass
+
+    # Log out the user to clear session data
+    logout(request)
+
+    # Return a success response
+    return Response(
+        {'message': 'Successfully logged out.'},
+        status=status.HTTP_200_OK
+    )
     
 @api_view(['POST'])
 @permission_classes([AllowAny])

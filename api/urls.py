@@ -15,5 +15,6 @@ urlpatterns = [
     path('categories/add', views.add_category, name='add-category'),
     path('categories/delete/<str:id>', views.delete_category, name='delete-category'),
     path('sign_in', views.sign_in, name='sign-in'),
+    path('log_out', views.log_out, name='log-out'),
     path('sign_up', views.sign_up, name='sign-up'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

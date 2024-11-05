@@ -37,7 +37,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Item
-        fields = ('id', 'category', 'name', 'amount', 'picture', 'createdBy')
+        fields = ('id', 'category', 'name', 'amount', 'picture', 'createdBy', 'units')
         read_only_fields = ('id',)
 
     def to_representation(self, instance):
@@ -53,8 +53,19 @@ class ItemSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         data = super().to_internal_value(data)
-        try:
-            data['amount'] = int(data['amount'])  # Convert amount to integer
-        except ValueError:
-            raise serializers.ValidationError({"amount": "Amount must be a valid number."})
+        
+        # Validate 'amount' if it exists
+        if 'amount' in data:
+            try:
+                data['amount'] = int(data['amount'])  # Convert amount to integer
+            except ValueError:
+                raise serializers.ValidationError({"amount": "Amount must be a valid number."})
+        
+        # Validate 'units' if it exists
+        if 'units' in data:
+            try:
+                data['units'] = int(data['units'])  # Convert units to integer
+            except ValueError:
+                raise serializers.ValidationError({"units": "Units must be a valid number."})
+        
         return data
