@@ -13,7 +13,7 @@ class Item(models.Model):
     )
     
     category = models.ForeignKey(
-        "Category", on_delete=models.CASCADE
+        "Category", on_delete=models.CASCADE, related_name='items'
     )
 
     

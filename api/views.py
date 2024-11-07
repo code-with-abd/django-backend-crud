@@ -25,12 +25,24 @@ def ApiOverview(request):
 
 @api_view(['GET'])
 def items(request):
-    try:
+    try:    
         name = request.query_params.get('name', "").strip()
-             # Retrieve all items
-        items = Item.objects.all().filter(name__icontains = name)
+        category = request.query_params.get('category', "").strip()
+
+        # Start with all items
+        items = Item.objects.all()
+
+        # Apply filters only if parameters are provided
+        if name:
+            items = items.filter(name__icontains=name)
+        if category:
+            # By ID of category
+            # items = items.filter(category=categoryID)
+            # By name
+            items = items.filter(category__name__icontains=category)  # Filter by category name
+
+        # Serialize the filtered items
         serializer = ItemSerializer(items, many=True)
-        
         # Return the serialized data
         return Response(data={'data': serializer.data}, status=status.HTTP_200_OK)
     
