@@ -11,6 +11,7 @@ from ..serializers import user_serializer
 def sign_in(request):
     # Get the username and password from the request data
     username = request.data.get('username')
+    
     password = request.data.get('password')
     
     # Authenticate the user
